@@ -752,11 +752,11 @@ const G=[
  <tr><td class="k">AA</td><td>↓ MA</td><td>ASA inhibition present</td></tr></table>
  <p class="mono">*ADP and AA inhibition cannot be calculated when a required value falls outside the accepted medication range (AMR); refer to TEG support guidance for interpretation. TEG 24/7 support: 1-800-GET-A-TEG (Haemonetics).</p>`},
 
-{id:"abx",t:"Antibiotic Prophylaxis Guideline for Trauma",dom:"med",pol:"January 2025",type:"sup",
- sum:"Selection and duration by trauma type; Gustilo grading; surgical dosing/re-dosing table.",
- kw:"antibiotic prophylaxis ceftriaxone metronidazole cefazolin clindamycin aztreonam vancomycin gustilo open fracture penetrating abdominal maxillofacial ampicillin sulbactam redosing",
+{id:"abx",t:"Antibiotic Prophylaxis Guideline for Trauma",dom:"med",pol:"January 2026",type:"sup",
+ sum:"Selection and duration by trauma type; Gustilo grading; ballistic fractures; surgical dosing/re-dosing table.",
+ kw:"antibiotic prophylaxis ceftriaxone metronidazole cefazolin clindamycin aztreonam vancomycin gustilo open fracture penetrating abdominal maxillofacial ampicillin sulbactam redosing ballistic gunshot GSW kinetic energy marine contamination open globe",
  body:`<h3>General principles</h3>
- <ul><li><b>Penetrating abdominal:</b> in hemorrhagic shock, the antibiotic dose may be increased 2–3× and repeated after every 10 units of blood transfused until no further loss. Avoid aminoglycosides where possible; absence of hollow-viscus injury needs no further antibiotics.</li><li><b>Brain & spinal cord:</b> <i>S. aureus</i> is the most frequently associated organism.</li><li><b>Thoracic:</b> EAST finds insufficient evidence for or against presumptive antibiotics in tube thoracostomy for traumatic hemopneumothorax.</li></ul>
+ <ul><li><b>Penetrating abdominal:</b> in hemorrhagic shock, the antibiotic dose may be increased 2–3× and repeated after every 10 units of blood transfused until no further loss. Avoid aminoglycosides where possible; absence of hollow-viscus injury needs no further antibiotics.</li><li><b>Brain & spinal cord:</b> <i>S. aureus</i> is the most frequently associated organism.</li><li><b>Thoracic:</b> EAST finds insufficient evidence for or against presumptive antibiotics in tube thoracostomy for traumatic hemopneumothorax.</li><li><b>Ballistic fractures:</b> whether to give antibiotics in the trauma bay is the provider’s assessment — a low-energy GSW with minimal soft-tissue defect and no vascular involvement may need none; all other patients should be considered for antibiotics (per the table below) given the risk of bone infection.</li></ul>
  <h3>Gustilo classification (open fractures)</h3>
  <table><tr><th>Grade</th><th>Description</th><th>Infection rate</th></tr>
  <tr><td class="k">I</td><td>Wound &lt; 1 cm, clean</td><td>0–2%</td></tr>
@@ -776,6 +776,7 @@ const G=[
  <tr><td class="k">Open fracture — Grade II</td><td>Ceftriaxone</td><td>Clindamycin + aztreonam</td><td>24–48 h</td></tr>
  <tr><td class="k">Open fracture — Grade III</td><td>Ceftriaxone</td><td>Clindamycin + aztreonam</td><td>72 h after injury OR 24 h after soft-tissue coverage (whichever earlier)</td></tr>
  <tr><td class="k">Marine contamination</td><td>Ceftriaxone + doxycycline</td><td>Clindamycin + ciprofloxacin</td><td>—</td></tr>
+ <tr><td class="k">Ballistic fracture</td><td>Ceftriaxone</td><td>Clindamycin + aztreonam</td><td>24–72 h per ortho trauma recommendations</td></tr>
  <tr><td class="k">Penetrating chest, no esophageal disruption</td><td>Cefazolin</td><td>Clindamycin</td><td>24 h</td></tr>
  <tr><td class="k">Penetrating chest, with esophageal disruption</td><td>Cefazolin + metronidazole</td><td>Clindamycin + aztreonam</td><td>24 h after definitive washout</td></tr>
  <tr><td class="k">Open globe</td><td>Cefepime + vancomycin</td><td>Ciprofloxacin + vancomycin</td><td>Per Ophthalmology</td></tr></table>
@@ -1354,7 +1355,7 @@ const foot=document.getElementById('footmeta');
 
 const tmp=document.createElement('div');
 G.forEach(g=>g.sec='trauma');EGS.forEach(g=>g.sec='egs');
-ALL_G.forEach(g=>{tmp.innerHTML=g.body;g._plain=(g.t+' '+(g.pol||'')+' '+g.sum+' '+g.kw+' '+DOM[g.dom].l+' '+(tmp.textContent||'')).toLowerCase();g._flag=/class="verify"/.test(g.body);});
+ALL_G.forEach(g=>{tmp.innerHTML=g.body;g._plain=(g.t+' '+(g.pol||'')+' '+g.sum+' '+g.kw+' '+DOM[g.dom].l+' '+(tmp.textContent||'')).toLowerCase();g._words=new Set(g._plain.split(/[^a-z0-9]+/).filter(Boolean));g._flag=/class="verify"/.test(g.body);});
 
 function card(g){
   const el=document.createElement('article');
@@ -1411,11 +1412,85 @@ function highlight(term){
   });
 }
 
+/* ---------- Search synonyms (brand<->generic, abbreviations, lay terms) ---------- */
+/* Each inner array = interchangeable terms. Typing any one finds cards that use any other. */
+const SYN=[
+  // --- Antibiotics & drugs: brand <-> generic ---
+  ["cefazolin","ancef","kefzol"],
+  ["ceftriaxone","rocephin"],
+  ["metronidazole","flagyl"],
+  ["piperacillin-tazobactam","piperacillin/tazobactam","zosyn","pip-tazo","pip tazo"],
+  ["ampicillin-sulbactam","ampicillin/sulbactam","unasyn"],
+  ["amoxicillin/clavulanate","amoxicillin-clavulanate","amoxicillin/clavulanic","augmentin"],
+  ["vancomycin","vanco"],
+  ["ciprofloxacin","cipro"],
+  ["levofloxacin","levaquin"],
+  ["clindamycin","cleocin"],
+  ["aztreonam","azactam"],
+  ["cefepime","maxipime"],
+  ["cefuroxime","ceftin","zinacef"],
+  ["cephalexin","keflex"],
+  ["doxycycline","vibramycin","doxy"],
+  ["enoxaparin","lovenox"],
+  ["fluconazole","diflucan"],
+  ["micafungin","mycamine"],
+  ["meropenem","merrem"],
+  ["ertapenem","invanz"],
+  ["gentamicin","garamycin"],
+  ["penicillin","pen g","penicillin g"],
+  ["heparin","ufh","unfractionated heparin"],
+  ["desmopressin","ddavp"],
+  // --- Conditions / shorthand ---
+  ["appendicitis","appy"],
+  ["cholecystitis","cholecystectomy","gallbladder","lap chole","ccy"],
+  ["small bowel obstruction","sbo","bowel obstruction"],
+  ["necrotizing","nsti","necrotizing fasciitis","nec fasc","flesh eating","flesh-eating"],
+  ["gunshot","gsw","ballistic","gunshot wound"],
+  ["traumatic brain injury","tbi","head injury","head trauma"],
+  ["spinal cord injury","sci","cord injury"],
+  ["venous thromboembolism","vte","blood clot"],
+  ["deep vein thrombosis","dvt"],
+  ["pulmonary embolism","pulmonary embolus"],
+  ["mass transfusion","mtp","massive transfusion"],
+  ["thromboelastography","teg"],
+  ["open fracture","gustilo"],
+  ["fracture","fractures","fx","broken bone"],
+  ["orthopedic","orthopaedic","ortho"],
+  ["enhanced recovery","eras"],
+  ["antibiotic","antibiotics","abx","antimicrobial"],
+  ["prophylaxis","prophylactic","prophy","ppx"],
+  // --- Anatomy / lay <-> clinical ---
+  ["abdominal","abdomen","belly"],
+  ["facial fracture","maxillofacial","face fracture"],
+  ["mandibular","mandible","jaw"],
+  ["zygomatic","zygoma","cheekbone"],
+  ["motor vehicle","mvc","mva"],
+  ["ercp","endoscopic retrograde cholangiopancreatography"],
+  ["mrcp","magnetic resonance cholangiopancreatography"]
+];
+const SYNMAP={};
+SYN.forEach(grp=>grp.forEach(w=>{SYNMAP[w]=grp;}));
+function synHit(grp,P,W){return grp.some(v=>/[^a-z0-9]/.test(v)?P.includes(v):W.has(v));}
+function matches(g,term){
+  if(!term)return true;
+  const P=g._plain,W=g._words;
+  if(P.includes(term))return true;                       // raw query substring (supports partial words) — unchanged behavior
+  const whole=SYNMAP[term];                               // whole-term synonym (handles multi-word synonyms)
+  if(whole&&synHit(whole,P,W))return true;
+  const toks=term.split(/\s+/).filter(Boolean);           // multi-word: every token hits (own text OR a synonym)
+  if(toks.length>1&&toks.every(tok=>{
+      if(P.includes(tok))return true;
+      const grp=SYNMAP[tok];
+      return grp?synHit(grp,P,W):false;
+  }))return true;
+  return false;
+}
+
 function run(){
   const term=qEl.value.trim().toLowerCase();
   clearBtn.style.display=term?'block':'none';
   const src=ALL_G.filter(g=>g.sec===activeSection);
-  const list=term?src.filter(g=>g._plain.includes(term)):src;
+  const list=term?src.filter(g=>matches(g,term)):src;
   const n=build(list);
   shownEl.textContent=n;
   showntx.textContent=(term?'match'+(n===1?'':'es'):'guideline'+(n===1?'':'s'));
